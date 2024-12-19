@@ -1,0 +1,284 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Generator Toya</title>
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Background Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background: url('/static/background_cleanup.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #ffffff;
+            text-align: center;
+            padding: 50px 20px;
+            overflow: hidden; /* Hide butterflies flying outside the window */
+        }
+
+        /* Butterfly animation */
+        @keyframes fly {
+            0% {
+                transform: translate(0, 0) rotate(0);
+            }
+            25% {
+                transform: translate(50px, -50px) rotate(45deg);
+            }
+            50% {
+                transform: translate(-100px, -100px) rotate(90deg);
+            }
+            75% {
+                transform: translate(150px, -150px) rotate(135deg);
+            }
+            100% {
+                transform: translate(0, -200px) rotate(180deg);
+            }
+        }
+
+        .butterfly {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: url('https://path/to/your/butterfly-image.png') no-repeat center;
+            background-size: contain;
+            animation: fly 8s linear infinite, randomMovement 10s infinite;
+        }
+
+        /* Random movement of butterflies */
+        @keyframes randomMovement {
+            0% {
+                top: 100%;
+                left: 100%;
+            }
+            50% {
+                top: 10%;
+                left: 40%;
+            }
+            100% {
+                top: 90%;
+                left: 80%;
+            }
+        }
+
+        /* Main Container */
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            display: inline-block;
+            max-width: 500px; /* Adjusted width */
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease-in-out;
+            margin-bottom: 30px;
+        }
+
+        .container:hover {
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Heading and Text */
+        h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        /* Input and Button Styling */
+        textarea, button {
+            width: calc(100% - 20px);
+            padding: 15px;
+            margin: 10px auto;
+            font-size: 18px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            outline: none;
+            transition: border-color 0.3s ease-in-out;
+        }
+
+        textarea:focus, button:hover {
+            border-color: #48c6ef;
+        }
+
+        button {
+            background: #48c6ef;
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        button:hover {
+            background: #6f86d6;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Result Styling */
+        #result {
+            margin-top: 30px;
+        }
+
+        img {
+            width: 100%; /* Adjusted for full container width */
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        img:hover {
+            transform: scale(1.05);
+        }
+
+        p.error {
+            color: #d9534f;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+
+        /* Download Button */
+        .download-btn {
+            display: inline-block;
+            margin-top: 20px;
+            background-color: #48c6ef;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .download-btn:hover {
+            background-color: #6f86d6;
+        }
+
+        /* Popup Styling */
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 80%;
+            width: 400px; /* Adjusted width */
+            max-height: 80%;
+            overflow: auto;
+        }
+
+        .popup img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .popup .close-btn {
+            color: #fff;
+            font-size: 30px;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Image Generator Toya</h1>
+        <p>Enter a prompt to generate an image:</p>
+        <textarea id="prompt" placeholder="Enter your prompt here" rows="5" cols="50"></textarea>
+        <button onclick="generateImage()">Generate Image</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Function to create flying butterflies
+        function createButterfly() {
+            const butterfly = document.createElement('div');
+            butterfly.classList.add('butterfly');
+            document.body.appendChild(butterfly);
+
+            // Randomly place the butterfly at different positions
+            const randomX = Math.random() * window.innerWidth;
+            const randomY = Math.random() * window.innerHeight;
+
+            butterfly.style.left = `${randomX}px`;
+            butterfly.style.top = `${randomY}px`;
+        }
+
+        // Create multiple butterflies on load
+        for (let i = 0; i < 5; i++) {
+            createButterfly();
+        }
+
+        async function generateImage() {
+            const prompt = document.getElementById('prompt').value;
+            if (!prompt) {
+                alert("Please enter a prompt");
+                return;
+            }
+
+            document.getElementById('result').innerHTML = "Generating image...";
+
+            try {
+                const response = await fetch('/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt }),
+                });
+
+                const data = await response.json();
+
+                if (data.image_url) {
+                    openPopup(data.image_url);  // Open popup immediately with the image
+                    document.getElementById('result').innerHTML = "";  // Clear result text
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <p class="error">Error: ${data.error}</p>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <p class="error">Error: ${error.message}</p>
+                `;
+            }
+        }
+
+        function openPopup(imageUrl) {
+            const popup = document.createElement('div');
+            popup.classList.add('popup');
+            popup.innerHTML = `
+                <img src="${imageUrl}" alt="Generated Image" />
+                <a href="${imageUrl}" class="download-btn" download>Download Image</a>
+                <span class="close-btn" onclick="closePopup()">×</span>
+            `;
+            document.body.appendChild(popup);
+        }
+
+        function closePopup() {
+            const popup = document.querySelector('.popup');
+            if (popup) {
+                popup.remove();
+            }
+        }
+    </script>
+</body>
+</html>
